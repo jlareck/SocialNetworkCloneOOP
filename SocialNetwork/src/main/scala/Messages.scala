@@ -7,7 +7,7 @@ class Likes{
   var rating: Int = 0
 
 }
-class Messages(var owner: User, var string: String, var theme: Themes,
+class Messages(var owner: String, var string: String, var theme: Themes,
                var comments: ArrayBuffer[Messages], var references: ArrayBuffer[User]) {
   var likes = new Likes()
 }
