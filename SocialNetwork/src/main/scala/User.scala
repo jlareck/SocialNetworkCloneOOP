@@ -1,33 +1,32 @@
 package scala
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.immutable.IndexedSeq
+
 import scala.Helpers._
 import org.mongodb.scala._
-import org.mongodb.scala.model.Aggregates._
-import org.mongodb.scala.model.Filters._
-import org.mongodb.scala.model.Projections._
-import org.mongodb.scala.model.Sorts._
-import org.mongodb.scala.model.Updates._
-import org.mongodb.scala.model._
-import collection.JavaConverters._
-class User(val login:String, var name: String, val favouriteThemes: ArrayBuffer[Themes], val friends: ArrayBuffer[User], val messages: ArrayBuffer[Messages], val favouriteMessages: ArrayBuffer[Messages]) {
+
+class User(val userName:String,val password: String, var name: String, val favouriteThemes: ArrayBuffer[Themes] = ArrayBuffer(), val friends: ArrayBuffer[User]= ArrayBuffer(), val messages: ArrayBuffer[Messages]= ArrayBuffer(), val favouriteMessages: ArrayBuffer[Messages]= ArrayBuffer()) {
 
 
-  def createMessage (owner: User, string: String, theme: Themes,
+
+
+  def createMessage (owner: String, string: String, theme: Themes,
                      comments: ArrayBuffer[Messages], references: ArrayBuffer[User] = ArrayBuffer()): ArrayBuffer[Messages] = {
-    val message = new Messages(User.this, string, theme, comments, references)
+    val message = new Messages(owner, string, theme, comments, references)
     messages += message
   }
 
 
   def repost(text:String, message: Messages, references: ArrayBuffer[User]): Unit = {
-    val repostMessage = new Messages(User.this, text, message.theme,ArrayBuffer[Messages](), references)
+    val repostMessage = new Messages(User.this.userName, text, message.theme,ArrayBuffer[Messages](), references)
     messages+=repostMessage
   }
 
   def like(message: Messages): Unit ={
-    message.likes.likes += 1;
-    message.likes.rating += 1;
+    if(!favouriteMessages.exists(_.string == message.string)){
+      message.likes.likes += 1;
+      message.likes.rating += 1;
+      favouriteMessages+=message
+    }
 
   }
 
@@ -36,13 +35,13 @@ class User(val login:String, var name: String, val favouriteThemes: ArrayBuffer[
 
 object Test extends App{
 
-    var user1 = new User("user1","a", ArrayBuffer[Themes](), ArrayBuffer[User](), ArrayBuffer[Messages](), ArrayBuffer[Messages]())
+    var user1 = new User("user1","fda","a", ArrayBuffer[Themes](), ArrayBuffer[User](), ArrayBuffer[Messages](), ArrayBuffer[Messages]())
     var theme = new Themes()
     theme.theme = "tema"
-    user1.createMessage(user1, "ccccc", theme ,ArrayBuffer())
-    user1.createMessage(user1, "bbbbb", theme ,ArrayBuffer())
-    user1.createMessage(user1, "aaaaa", theme ,ArrayBuffer())
-    user1.messages.foreach(x=> println(x.string))
+//    user1.createMessage(user1., "ccccc", theme ,ArrayBuffer())
+//    user1.createMessage(user1, "bbbbb", theme ,ArrayBuffer())
+//    user1.createMessage(user1, "aaaaa", theme ,ArrayBuffer())
+//    user1.messages.foreach(x=> println(x.string))
 
   val mongoClient: MongoClient = MongoClient()
 
@@ -55,10 +54,11 @@ object Test extends App{
   collection.drop().results()
 
   // make a document and insert it
-  val doc: Document = Document("_id" -> 0, "name" -> "MongoDB", "type" -> "database",
+  val doc1: Document = Document( "name" -> "MongoDB", "type" -> "database",
     "count" -> 1, "info" -> Document("x" -> 203, "y" -> 102))
-  collection.insertOne(doc).results()
 
-  collection.find().first().printHeadResult()
+  collection.insertOne(doc1).results()
+ //collection.deleteMany(Document())
+
 
 }
