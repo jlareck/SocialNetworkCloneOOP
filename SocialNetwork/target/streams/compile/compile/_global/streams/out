@@ -1,0 +1,15 @@
+[0m[[0m[0mdebug[0m] [0m[0mAcquiring lock on file /Users/mykolamedynsky/Desktop/module1/SocialNetwork/project/target/.sbt-compilation-infos/socialnetwork-compile/.sbt-idea-lock ...[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/mykolamedynsky/Desktop/module1/SocialNetwork/src/main/scala/User.scala:3:1: identifier expected but 'class' found.[0m
+[0m[[0m[31merror[0m] [0m[0mclass User(val login:String, var name: String, val favouriteThemes: ArrayBuffer[Themes], val friends: ArrayBuffer[User], val messages: ArrayBuffer[Messages], val favouriteMessages: ArrayBuffer[Messages]) {[0m
+[0m[[0m[31merror[0m] [0m[0m^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/mykolamedynsky/Desktop/module1/SocialNetwork/src/main/scala/User.scala:25:2: . expected[0m
+[0m[[0m[31merror[0m] [0m[0m}[0m
+[0m[[0m[31merror[0m] [0m[0m ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/mykolamedynsky/Desktop/module1/SocialNetwork/src/main/scala/User.scala:45:5: identifier expected but '.' found.[0m
+[0m[[0m[31merror[0m] [0m[0m    .build()[0m
+[0m[[0m[31merror[0m] [0m[0m    ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/mykolamedynsky/Desktop/module1/SocialNetwork/src/main/scala/User.scala:46:3: ')' expected but 'val' found.[0m
+[0m[[0m[31merror[0m] [0m[0m  val mongoClient: MongoClient = MongoClient(settings)[0m
+[0m[[0m[31merror[0m] [0m[0m  ^[0m
+[0m[[0m[31merror[0m] [0m[0mfour errors found[0m
+[0m[[0m[0mdebug[0m] [0m[0mReleasing lock on file /Users/mykolamedynsky/Desktop/module1/SocialNetwork/project/target/.sbt-compilation-infos/socialnetwork-compile/.sbt-idea-lock.[0m

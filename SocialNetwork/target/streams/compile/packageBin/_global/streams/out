@@ -1,0 +1,23 @@
+[0m[[0m[0mdebug[0m] [0m[0mPackaging /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/socialnetwork_2.12-1.0.jar ...[0m
+[0m[[0m[0mdebug[0m] [0m[0mInput file mappings:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/classes[0m
+[0m[[0m[0mdebug[0m] [0m[0m	Test12.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/classes/Test12.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	Messages.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/classes/Messages.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	Registration$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/classes/Registration$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	Themes.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/classes/Themes.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	User.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/classes/User.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	Registration.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/classes/Registration.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	Likes.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/classes/Likes.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	Test12$delayedInit$body.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/classes/Test12$delayedInit$body.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	Test12$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/mykolamedynsky/Desktop/module1/SocialNetwork/target/scala-2.12/classes/Test12$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0mDone packaging.[0m
