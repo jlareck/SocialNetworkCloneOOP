@@ -7,8 +7,8 @@ object Registration extends App {
     println("Enter your first name and last name")
     val name: String = scala.io.StdIn.readLine()
 
-    val newUser = new User(userName, password, name)
-
+    val newUser = new User("",userName, password, name)
+    MongoInteractor.writeUserToDatabase(newUser)
 
 
 }
