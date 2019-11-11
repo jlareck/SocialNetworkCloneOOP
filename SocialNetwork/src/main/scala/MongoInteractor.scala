@@ -9,16 +9,17 @@ import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.ReplaceOptions
 import org.mongodb.scala.bson
 object MongoInteractor {
-  val mongoClient: MongoClient = MongoClient()
+   val mongoClient: MongoClient = MongoClient()
 
 
 
-  val database: MongoDatabase = mongoClient.getDatabase("mydb")
+   val database: MongoDatabase = mongoClient.getDatabase("mydb")
 
-  val collection: MongoCollection[Document] = database.getCollection("test")
+   val collection: MongoCollection[Document] = database.getCollection("test")
 
-  def authorization(userName: String, password: String):User={
-
+  def authorization(userName: String, password: String):Unit ={
+      val a = collection.find(and(equal("userName",userName),equal("password", password))).printHeadResult()
+      print(a)
   }
 
   def writeUserToDatabase(user: User): Unit ={
