@@ -1,6 +1,5 @@
 package scala
-class Themes {
-  var theme: String = ""
+case class Themes(var theme: String = "")
 
-}
+
 
