@@ -1,3 +1,5 @@
+import org.bson.types.ObjectId
+
 object Registration extends App {
 
     println("Hello! Enter your username")
@@ -8,6 +10,8 @@ object Registration extends App {
     val name: String = scala.io.StdIn.readLine()
 
     val newUser = new User("",userName, password, name)
+    newUser.id = System.identityHashCode(newUser).toString
+    println(newUser.id)
     MongoInteractor.writeUserToDatabase(newUser)
 
 
