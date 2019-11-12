@@ -4,10 +4,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.Helpers._
 import org.mongodb.scala._
 
-case class User(var id: String, userName:String, password: String, var name: String,  favouriteThemes: ArrayBuffer[Themes] = ArrayBuffer(),  friends: ArrayBuffer[User]= ArrayBuffer(), messages: ArrayBuffer[Messages]= ArrayBuffer(), favouriteMessages: ArrayBuffer[Messages]= ArrayBuffer()) {
-
-
-
+case class User(var id: String, userName:String, password: String, name: String,  favouriteThemes: ArrayBuffer[Themes] = ArrayBuffer(),  friends: ArrayBuffer[User]= ArrayBuffer(), messages: ArrayBuffer[Messages]= ArrayBuffer(), favouriteMessages: ArrayBuffer[Messages]= ArrayBuffer()) {
 
   def createMessage (owner: String, string: String, theme: Themes,
                      comments: ArrayBuffer[Messages], references: ArrayBuffer[User] = ArrayBuffer()): ArrayBuffer[Messages] = {
