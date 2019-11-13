@@ -1,4 +1,4 @@
-package scala
+//package scala
 import scala.collection.mutable.ArrayBuffer
 
 import scala.Helpers._
@@ -6,15 +6,16 @@ import org.mongodb.scala._
 
 case class User(var id: String, userName:String, password: String, name: String,  favouriteThemes: ArrayBuffer[Themes] = ArrayBuffer(),  friends: ArrayBuffer[User]= ArrayBuffer(), messages: ArrayBuffer[Messages]= ArrayBuffer(), favouriteMessages: ArrayBuffer[Messages]= ArrayBuffer()) {
 
-  def createMessage (owner: String, string: String, theme: Themes,
-                     comments: ArrayBuffer[Messages], references: ArrayBuffer[User] = ArrayBuffer()): ArrayBuffer[Messages] = {
-    val message =  Messages(owner, string, theme, comments, references)
+  def createMessage ( string: String, theme: Themes, path: String,
+                     comments: ArrayBuffer[Messages] = ArrayBuffer(), references: ArrayBuffer[User] = ArrayBuffer()): ArrayBuffer[Messages] = {
+    val message =  Messages(string, userName, theme, comments, references)
+    MongoInteractor.writeMessageToDatabase(message, path )
     messages += message
   }
 
 
   def repost(text:String, message: Messages, references: ArrayBuffer[User]): Unit = {
-    val repostMessage = Messages(User.this.userName, text, message.theme,ArrayBuffer[Messages](), references)
+    val repostMessage = Messages( text,userName, message.theme,ArrayBuffer[Messages](), references)
     messages+=repostMessage
   }
 
