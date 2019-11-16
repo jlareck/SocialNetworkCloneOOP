@@ -73,24 +73,24 @@ object MongoInteractor {
     collection.updateOne(equal("userName", commentedUser), push(path, doc)).results()
   }
 
-  def likeMessage(userThatLike:String, ownerOfMessageToBeLiked:String, path:String):Unit={
+  def likeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={
     collection.updateOne(equal("userName", userThatLike),
-      push(path,BsonDocument("ownerOfMessage"->ownerOfMessageToBeLiked, "path"-> path)))
+      push(path,BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path)))
 
-    collection.updateOne(equal("userName", ownerOfMessageToBeLiked), inc(path,1))
+    collection.updateOne(equal("userName", ownerOfMessage), inc(path,1))
     val splitedPath = path.split(".")
     splitedPath(splitedPath.size-1) = "rating"
     val ratingPath = splitedPath.mkString(".")
-    collection.updateOne(equal("userName", ownerOfMessageToBeLiked),inc(ratingPath, 1))
+    collection.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, 1))
 
   }
-  def dislikeMessage(userThatLike:String, ownerOfMessageToBeLiked:String, path:String):Unit={
+  def dislikeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={
 
-    collection.updateOne(equal("userName", ownerOfMessageToBeLiked), inc(path,1))
+    collection.updateOne(equal("userName", ownerOfMessage), inc(path,1))
     val splitPath = path.split(".")
     splitPath(splitPath.size-1) = "rating"
     val ratingPath = splitPath.mkString(".")
-    collection.updateOne(equal("userName", ownerOfMessageToBeLiked),inc(ratingPath, -1))
+    collection.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, -1))
 
   }
   
