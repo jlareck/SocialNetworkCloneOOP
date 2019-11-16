@@ -4,28 +4,39 @@ import scala.collection.mutable.ArrayBuffer
 import scala.Helpers._
 import org.mongodb.scala._
 
-case class User(var id: String, userName:String, password: String, name: String,  favouriteThemes: ArrayBuffer[Themes] = ArrayBuffer(),  friends: ArrayBuffer[User]= ArrayBuffer(), messages: ArrayBuffer[Messages]= ArrayBuffer(), favouriteMessages: ArrayBuffer[Messages]= ArrayBuffer()) {
+case class User(var id: String, userName:String, password: String, name: String,  favouriteThemes: ArrayBuffer[Themes] = ArrayBuffer(),  friends: ArrayBuffer[String]= ArrayBuffer(), messages: ArrayBuffer[Messages]= ArrayBuffer(), favouriteMessages: ArrayBuffer[PathToFavouriteMessage]= ArrayBuffer()) {
 
-  def createMessage ( string: String, theme: Themes, path: String,
-                     comments: ArrayBuffer[Messages] = ArrayBuffer(), references: ArrayBuffer[User] = ArrayBuffer()): ArrayBuffer[Messages] = {
-    val message =  Messages(string, userName, theme, comments, references)
-    MongoInteractor.writeMessageToDatabase(message, path )
+  def createMessage (text: String, theme: Themes,
+                     references: ArrayBuffer[User] = ArrayBuffer()): Unit = {
+    val message =  Messages(text, userName, theme, ArrayBuffer(), references)
+    MongoInteractor.writeMessageToDatabase(message, "messages", userName)
     messages += message
   }
 
+  def comment(text: String, path:String,userNameToComment: String, theme: Themes, references: ArrayBuffer[User] ): Unit ={
+    val message =  Messages(text, userName, theme, ArrayBuffer(), references)
+    MongoInteractor.writeMessageToDatabase(message, path, userNameToComment)
+  }
 
   def repost(text:String, message: Messages, references: ArrayBuffer[User]): Unit = {
     val repostMessage = Messages( text,userName, message.theme,ArrayBuffer[Messages](), references)
     messages+=repostMessage
   }
 
-  def like(message: Messages): Unit ={
-    if(!favouriteMessages.exists(_.text == message.text)){
-      message.likes.likes += 1
-      message.likes.rating += 1
-      favouriteMessages+=message
+  def like(path: String, ownerOfMessage:String): Unit ={
+    if(!favouriteMessages.exists(x=> x.path == path && x.ownerOfMessage == ownerOfMessage )){
+         MongoInteractor.likeMessage(userName, ownerOfMessage,path)
     }
+  }
+  def subscribe(friendsName: String): Unit ={
+      if (MongoInteractor.findUser(userName)){
 
+        friends+=userName
+        MongoInteractor.addFriendToDataBase(userName,friendsName)
+
+        println("You subscribed successfully")
+      }
+      else println("There is no person with name " + friendsName)
   }
 
 
