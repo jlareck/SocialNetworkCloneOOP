@@ -28,11 +28,11 @@ object MongoInteractor {
         userName <- hCursor.get[String]("userName")
         password <- hCursor.get[String]("password")
         name <- hCursor.get[String]("name")
-        favourireThemes <- hCursor.get[Array[Themes]]("favouriteThemes")
+        favouriteThemes <- hCursor.get[Array[Themes]]("favouriteThemes")
         messages <- hCursor.get[Array[Messages]]("messages")
         friends <- hCursor.get[Array[String]]("friends")
         favouriteMessages <- hCursor.get[Array[PathToFavouriteMessage]]("favouriteMessages")
-      } yield User(id,userName,password, name, favourireThemes, friends, messages, favouriteMessages)
+      } yield User(id,userName,password, name, favouriteThemes, friends, messages, favouriteMessages)
     }
   implicit val messageDecoder: Decoder[Messages] =
     (hCursor: HCursor) => {
@@ -46,7 +46,14 @@ object MongoInteractor {
 
       } yield Messages(text,owner, Themes(theme), comments,references,likes)
     }
+  implicit val pathDecoder: Decoder[PathToFavouriteMessage] =
+    (hCursor: HCursor) => {
+      for {
+        path <- hCursor.get[String]("path")
+        ownerOfMessage <- hCursor.get[String]("ownerOfMessage")
 
+      } yield PathToFavouriteMessage(ownerOfMessage, path)
+    }
   def authorization(userName: String, password: String):User ={ // TODO: implement smth when user in not decoded
     val foundUser = collection.find(and(equal("userName",userName),
       equal("password", password))).convertToJsonString().stripMargin
@@ -75,22 +82,23 @@ object MongoInteractor {
 
   def likeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={
     collection.updateOne(equal("userName", userThatLike),
-      push(path,BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path)))
+      push("favouriteMessages",BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path))).results()
 
-    collection.updateOne(equal("userName", ownerOfMessage), inc(path,1))
-    val splitedPath = path.split(".")
+    collection.updateOne(equal("userName", ownerOfMessage), inc(path,1)).results()
+    val splitedPath = path.split('.')
+    println(splitedPath(splitedPath.size-1))
     splitedPath(splitedPath.size-1) = "rating"
     val ratingPath = splitedPath.mkString(".")
-    collection.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, 1))
+    collection.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, 1)).results()
 
   }
   def dislikeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={
 
-    collection.updateOne(equal("userName", ownerOfMessage), inc(path,1))
+    collection.updateOne(equal("userName", ownerOfMessage), inc(path,1)).results()
     val splitPath = path.split(".")
     splitPath(splitPath.size-1) = "rating"
     val ratingPath = splitPath.mkString(".")
-    collection.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, -1))
+    collection.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, -1)).results()
 
   }
   
