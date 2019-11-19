@@ -8,17 +8,22 @@ case class User(var id: String, userName:String, password: String, name: String,
                 favouriteThemes: ArrayBuffer[Themes] = ArrayBuffer(),
                 friends: ArrayBuffer[String]= ArrayBuffer(), subscribers:ArrayBuffer[String] = ArrayBuffer(),
                 messages: ArrayBuffer[Messages]= ArrayBuffer(), favouriteMessages:
-                ArrayBuffer[PathToFavouriteMessage]= ArrayBuffer(),
-                timeline: ArrayBuffer[Messages]=ArrayBuffer()) {
+                ArrayBuffer[Path]= ArrayBuffer(),
+                timeline: ArrayBuffer[Path]=ArrayBuffer()) {
 
   def createMessage (text: String, theme: Themes,
                      references: ArrayBuffer[User] = ArrayBuffer()): Unit = {
+
     val message =  Messages(text, userName, theme, ArrayBuffer(), references)
-    MongoInteractor.writeMessageToDatabase(message, "messages", userName)
     messages += message
+    MongoInteractor.writeMessageToDatabase(message, userName, messages.size-1, subscribers)
+
   }
 
-
+  def printTimeline():Unit={
+    val timelineToPrint = MongoInteractor.decodeTimeline(timeline)
+    timelineToPrint.foreach(println)
+  }
 
   def repost(text:String, message: Messages, references: ArrayBuffer[User]): Unit ={
     val repostMessage = Messages( text,userName, message.theme,ArrayBuffer[Messages](), references)
