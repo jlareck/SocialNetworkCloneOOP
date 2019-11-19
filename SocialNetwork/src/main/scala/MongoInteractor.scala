@@ -16,13 +16,18 @@ import collection.mutable._
 import org.mongodb.scala.model.Filters._
 
 import org.mongodb.scala.bson._
+import java.util.concurrent.LinkedBlockingDeque
 
+
+
+import scala.reflect.ClassTag
 object MongoInteractor {
   private val mongoClient: MongoClient = MongoClient()
   private val database: MongoDatabase = mongoClient.getDatabase("mydb")
 
   private val collection: MongoCollection[Document] = database.getCollection("test")
-  implicit def tobuffer[A: ClassTag](a: Array[A]) = ArrayBuffer(a: _*)
+  implicit def toBuffer[A: ClassTag](a: Array[A]) = ArrayBuffer(a: _*)
+
   implicit val userDecoder: Decoder[User] =
     (hCursor: HCursor) => {
       for {
@@ -46,11 +51,11 @@ object MongoInteractor {
         owner <- hCursor.get[String]("owner")
         theme <- hCursor.get[String]("theme")
         comments <- hCursor.get[Array[Messages]]("comments")
-        references <- hCursor.get[Array[User]]("references")
+        references <- hCursor.get[Array[String]]("references")
         likes <- hCursor.get[Likes]("likes")
-        usersWhoLiked <-hCursor.get[ArrayBuffer[String]]("usersWhoLiked")
-        usersWhoDisliked <-hCursor.get[ArrayBuffer[String]]("usersWhoDisliked")
-      } yield Messages(text,owner, Themes(theme), comments,references,likes, usersWhoLiked,usersWhoDisliked)
+        usersWhoReacted <-hCursor.get[ArrayBuffer[String]]("userWhoReacted")
+
+      } yield Messages(text,owner, Themes(theme), comments,references,likes, usersWhoReacted)
     }
 
 
@@ -87,7 +92,7 @@ object MongoInteractor {
     val doc = BsonDocument("text"->message.text, "owner"->message.owner,"theme"->message.theme.theme,
       "comments"->BsonArray(), "references"->BsonArray(),"likes"->BsonDocument("likes"->message.likes.likes,
         "dislikes"->message.likes.dislikes,"rating"->message.likes.rating),
-      "usersWhoLiked"->BsonArray(), "usersWhoDisliked"->BsonArray())
+      "userWhoReacted"->BsonArray())
 
     collection.updateOne(equal("userName", ownerOfMessage), push("messages", doc)).results()
     val path = "messages."+lastPositionInMessages
@@ -101,7 +106,7 @@ object MongoInteractor {
     val doc = BsonDocument("text"->message.text, "owner"->message.owner,"theme"->message.theme.theme,
       "comments"->BsonArray(), "references"->BsonArray(),"likes"->BsonDocument("likes"->message.likes.likes,
         "dislikes"->message.likes.dislikes,"rating"->message.likes.rating),
-      "usersWhoLiked"->BsonArray(), "usersWhoDisliked"->BsonArray())
+      "userWhoReacted"->BsonArray())
 
     collection.updateOne(equal("userName", commentedUser), push(path, doc)).results()
 
@@ -110,7 +115,6 @@ object MongoInteractor {
 
   def decodeTimeline(timeline: ArrayBuffer[Path]): ArrayBuffer[Messages]={
     val feed: ArrayBuffer[Messages] = ArrayBuffer()
-
     for(t <- timeline){
       val splitPath:Array[String] = t.path.split("\\.")
       println(t.path)
@@ -133,12 +137,17 @@ object MongoInteractor {
   }
 
   def likeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={
-    collection.updateOne(equal("userName", userThatLike),
-      push("favouriteMessages",BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path))).results()
+    val splitPath = path.split("\\.")
+
+
+    if (!splitPath.contains("comments")){
+      collection.updateOne(equal("userName", userThatLike),
+        push("favouriteMessages",BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path))).results()
+    }
 
     collection.updateOne(equal("userName", ownerOfMessage), inc(path,1)).results()
-    val splitPath = path.split('.')
-    println(splitPath(splitPath.size-1))
+
+   // println(splitPath(splitPath.size-1))
     splitPath(splitPath.size-1) = "rating"
     val ratingPath = splitPath.mkString(".")
     collection.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, 1)).results()
@@ -152,7 +161,7 @@ object MongoInteractor {
   def dislikeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={//TODO: implement adding user to list who disliked message
 
     collection.updateOne(equal("userName", ownerOfMessage), inc(path,1)).results()
-    val splitPath = path.split(".")
+    val splitPath = path.split("\\.")
     splitPath(splitPath.size-1) = "rating"
     val ratingPath = splitPath.mkString(".")
     collection.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, -1)).results()
