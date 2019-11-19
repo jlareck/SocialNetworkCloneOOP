@@ -4,7 +4,7 @@
 import org.mongodb.scala.bson.{BsonArray, BsonDocument}
 
 import scala.collection.mutable.ArrayBuffer
-
+import MongoInteractor._
 case class Likes(var likes: Int = 0,var dislikes: Int = 0,var rating: Int = 0)
 
 
@@ -16,7 +16,9 @@ case class Messages( text: String,owner: String, theme: Themes,
   def comment(text: String, path:String,userNameToComment: String, theme: Themes, references: ArrayBuffer[User] ): Unit ={
     val message =  Messages(text, owner, theme, ArrayBuffer(), references)
     comments+=message
-    MongoInteractor.writeMessageToDatabase(message, path, userNameToComment)
+    val splitedPath = path.split('.')
+
+    writeCommentToDatabase(message, path, userNameToComment)
   }
 
   //  def like(path: String, ownerOfMessage:String): Unit ={
