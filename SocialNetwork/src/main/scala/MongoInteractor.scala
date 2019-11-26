@@ -1,31 +1,28 @@
 
-
-import scala.reflect.ClassTag
+//import org.mongodb.scala.ChangedStreamsTest.collection
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
 
 import scala.Helpers._
-import org.mongodb.scala._
+import org.mongodb.scala.{ChangedStreamsTest, _}
 import org.mongodb.scala.model.Updates._
-import org.mongodb.scala.model.Projections._
+
 import org.mongodb.scala.model.Projections._
 
 import collection.mutable._
 import org.mongodb.scala.model.Filters._
-
+import org.mongodb.scala.model.changestream.ChangeStreamDocument
 import org.mongodb.scala.bson._
 import java.util.concurrent.LinkedBlockingDeque
-
-
 
 import scala.reflect.ClassTag
 object MongoInteractor {
   private val mongoClient: MongoClient = MongoClient()
   private val database: MongoDatabase = mongoClient.getDatabase("mydb")
 
-  private val collection: MongoCollection[Document] = database.getCollection("test")
+  val collection: MongoCollection[Document] = database.getCollection("test")
   implicit def toBuffer[A: ClassTag](a: Array[A]) = ArrayBuffer(a: _*)
 
   implicit val userDecoder: Decoder[User] =
@@ -94,10 +91,10 @@ object MongoInteractor {
         "dislikes"->message.likes.dislikes,"rating"->message.likes.rating),
       "userWhoReacted"->BsonArray())
 
-    collection.updateOne(equal("userName", ownerOfMessage), push("messages", doc)).results()
+    ChangedStreamsTest.collection.updateOne(equal("userName", ownerOfMessage), push("messages", doc)).subscribeAndAwait()
     val path = "messages."+lastPositionInMessages
     val doc2 = BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path)
-    collection.updateOne(equal("userName", ownerOfMessage), push("timeline", doc2)).results()
+    ChangedStreamsTest.collection.updateOne(equal("userName", ownerOfMessage), push("timeline", doc2)).subscribeAndAwait()
 
     addPostInSubscribersTimeline(subscribers,doc2)
 
@@ -133,7 +130,7 @@ object MongoInteractor {
 
   def addPostInSubscribersTimeline(subscribers: ArrayBuffer[String], doc: BsonDocument):Unit={
 
-    for (s<- subscribers) collection.updateOne(equal("userName", s), push("timeline", doc)).results()
+    for (s<- subscribers) ChangedStreamsTest.collection.updateOne(equal("userName", s), push("timeline", doc)).subscribeAndAwait()
   }
 
   def likeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={
