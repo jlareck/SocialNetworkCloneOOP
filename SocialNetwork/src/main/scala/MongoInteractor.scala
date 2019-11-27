@@ -1,28 +1,23 @@
 
-//import org.mongodb.scala.ChangedStreamsTest.collection
 import io.circe._
 import io.circe.generic.auto._
-import io.circe.parser._
-import io.circe.syntax._
 
-import scala.Helpers._
-import org.mongodb.scala.{ChangedStreamsTest, _}
+import Helpers._
+
+import org.mongodb.scala._
 import org.mongodb.scala.model.Updates._
 
 import org.mongodb.scala.model.Projections._
 
-import collection.mutable._
+
 import org.mongodb.scala.model.Filters._
-import org.mongodb.scala.model.changestream.ChangeStreamDocument
+
 import org.mongodb.scala.bson._
-import java.util.concurrent.LinkedBlockingDeque
+import scala.collection.mutable.ArrayBuffer
 
 import scala.reflect.ClassTag
 object MongoInteractor {
-  private val mongoClient: MongoClient = MongoClient()
-  private val database: MongoDatabase = mongoClient.getDatabase("mydb")
 
-  val collection: MongoCollection[Document] = database.getCollection("test")
   implicit def toBuffer[A: ClassTag](a: Array[A]) = ArrayBuffer(a: _*)
 
   implicit val userDecoder: Decoder[User] =
@@ -65,22 +60,22 @@ object MongoInteractor {
       } yield Path(ownerOfMessage, path)
     }
   def authorization(userName: String, password: String):User ={ // TODO: implement smth when user is not decoded
-    val foundUser = collection.find(and(equal("userName",userName),
+    val foundUser = collectionTest.find(and(equal("userName",userName),
       equal("password", password))).convertToJsonString().stripMargin
     val decodedUser = parser.decode[User](foundUser).toOption.get
     decodedUser
   }
 
   def addFriendToDataBase(userName: String, friendsName:String): Unit ={
-    collection.updateOne(equal("userName", userName),push("friends",friendsName)).results()
-    collection.updateOne(equal("userName", friendsName), push("subscribers", userName)).results()
+    collectionTest.updateOne(equal("userName", userName),push("friends",friendsName)).results()
+    collectionTest.updateOne(equal("userName", friendsName), push("subscribers", userName)).results()
   }
 
   def writeUserToDatabase(user: User): Unit ={
     val newUserDocument = BsonDocument("_id"->user.id, "userName"->user.userName,
       "password" -> user.password, "name"-> user.name,"favouriteThemes"-> BsonArray(),
       "friends"-> BsonArray(),"subscribers" -> BsonArray(), "messages" -> BsonArray(),"favouriteMessages" ->BsonArray(), "timeline"->BsonArray() )
-    collection.insertOne(newUserDocument).results()
+    collectionTest.insertOne(newUserDocument).results()
 
   }
 
@@ -91,10 +86,10 @@ object MongoInteractor {
         "dislikes"->message.likes.dislikes,"rating"->message.likes.rating),
       "userWhoReacted"->BsonArray())
 
-    ChangedStreamsTest.collection.updateOne(equal("userName", ownerOfMessage), push("messages", doc)).subscribeAndAwait()
+    collectionTest.updateOne(equal("userName", ownerOfMessage), push("messages", doc)).subscribeAndAwait()
     val path = "messages."+lastPositionInMessages
     val doc2 = BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path)
-    ChangedStreamsTest.collection.updateOne(equal("userName", ownerOfMessage), push("timeline", doc2)).subscribeAndAwait()
+    collectionTest.updateOne(equal("userName", ownerOfMessage), push("timeline", doc2)).subscribeAndAwait()
 
     addPostInSubscribersTimeline(subscribers,doc2)
 
@@ -105,7 +100,7 @@ object MongoInteractor {
         "dislikes"->message.likes.dislikes,"rating"->message.likes.rating),
       "userWhoReacted"->BsonArray())
 
-    collection.updateOne(equal("userName", commentedUser), push(path, doc)).results()
+    collectionTest.updateOne(equal("userName", commentedUser), push(path, doc)).results()
 
   }
 
@@ -116,7 +111,7 @@ object MongoInteractor {
       val splitPath:Array[String] = t.path.split("\\.")
       println(t.path)
       println(splitPath.size)
-      val message = collection.find(equal("userName",t.ownerOfMessage)).projection(fields(include("text"), slice(splitPath(0),splitPath(1).toInt, 1),excludeId())).convertToJsonString().stripMargin
+      val message = collectionTest.find(equal("userName",t.ownerOfMessage)).projection(fields(include("text"), slice(splitPath(0),splitPath(1).toInt, 1),excludeId())).convertToJsonString().stripMargin
       var m = message.dropRight(2)
       m = m.drop(14)
 
@@ -130,7 +125,7 @@ object MongoInteractor {
 
   def addPostInSubscribersTimeline(subscribers: ArrayBuffer[String], doc: BsonDocument):Unit={
 
-    for (s<- subscribers) ChangedStreamsTest.collection.updateOne(equal("userName", s), push("timeline", doc)).subscribeAndAwait()
+    for (s<- subscribers) collectionTest.updateOne(equal("userName", s), push("timeline", doc)).subscribeAndAwait()
   }
 
   def likeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={
@@ -138,30 +133,30 @@ object MongoInteractor {
 
 
     if (!splitPath.contains("comments")){
-      collection.updateOne(equal("userName", userThatLike),
+      collectionTest.updateOne(equal("userName", userThatLike),
         push("favouriteMessages",BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path))).results()
     }
 
-    collection.updateOne(equal("userName", ownerOfMessage), inc(path,1)).results()
+    collectionTest.updateOne(equal("userName", ownerOfMessage), inc(path,1)).results()
 
    // println(splitPath(splitPath.size-1))
     splitPath(splitPath.size-1) = "rating"
     val ratingPath = splitPath.mkString(".")
-    collection.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, 1)).results()
+    collectionTest.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, 1)).results()
 
     splitPath.remove(splitPath.size-2, 1)
     splitPath(splitPath.size-1) = "usersWhoLiked"
     val usersWhoLikedPath = splitPath.mkString(".")
-    collection.updateOne(equal("userName", ownerOfMessage), push(usersWhoLikedPath, userThatLike))
+    collectionTest.updateOne(equal("userName", ownerOfMessage), push(usersWhoLikedPath, userThatLike))
 
   }
   def dislikeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={//TODO: implement adding user to list who disliked message
 
-    collection.updateOne(equal("userName", ownerOfMessage), inc(path,1)).results()
+    collectionTest.updateOne(equal("userName", ownerOfMessage), inc(path,1)).results()
     val splitPath = path.split("\\.")
     splitPath(splitPath.size-1) = "rating"
     val ratingPath = splitPath.mkString(".")
-    collection.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, -1)).results()
+    collectionTest.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, -1)).results()
 
   }
 
@@ -170,7 +165,7 @@ object MongoInteractor {
 
 
   def findUser(userName: String):Boolean = {
-    val foundUser = collection.find(equal("userName", userName)).results()
+    val foundUser = collectionTest.find(equal("userName", userName)).results()
     if (foundUser.size == 1) true
     else false
 
