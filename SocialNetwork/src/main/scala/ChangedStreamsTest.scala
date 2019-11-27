@@ -5,10 +5,12 @@ import java.util.concurrent.TimeUnit.SECONDS
 
 
 import org.mongodb.scala.model.changestream.ChangeStreamDocument
-
+import com.mongodb.client.model.changestream.UpdateDescription
 import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+//import org.mongodb.scala.model.changestream.ChangeStreamDocument
+
 
 object ChangedStreamsTest extends {
 
@@ -48,7 +50,10 @@ object ChangedStreamsTest extends {
     override def onNext(t: T): Unit = {
       resultsBuffer+=t
 
-      if (printResults) println(t)
+      if (printResults) t match{
+        case t:ChangeStreamDocument[Document] => println(t.getUpdateDescription)
+        case _=> println("Parse Error")
+      }
       if (resultsBuffer.size >= minimumNumberOfResults) latch.countDown()
     }
 
