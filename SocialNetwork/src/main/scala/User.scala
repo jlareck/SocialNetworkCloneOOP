@@ -1,7 +1,7 @@
 //package scala
 import scala.collection.mutable.ArrayBuffer
 
-import scala.Helpers._
+
 import org.mongodb.scala._
 import MongoInteractor._
 case class User(var id: String, userName:String, password: String, name: String,
@@ -80,35 +80,7 @@ case class User(var id: String, userName:String, password: String, name: String,
   }
 }
 
-object Test extends App{
 
-   // var user1 = new User("user1","fda","a", ArrayBuffer[Themes](), ArrayBuffer[User](), ArrayBuffer[Messages](), ArrayBuffer[Messages]())
-    var theme = new Themes("fasdf")
-
-//    user1.createMessage(user1., "ccccc", theme ,ArrayBuffer())
-//    user1.createMessage(user1, "bbbbb", theme ,ArrayBuffer())
-//    user1.createMessage(user1, "aaaaa", theme ,ArrayBuffer())
-//    user1.messages.foreach(x=> println(x.string))
-
-  val mongoClient: MongoClient = MongoClient()
-
-
-
-  val database: MongoDatabase = mongoClient.getDatabase("mydb")
-
-  val collection: MongoCollection[Document] = database.getCollection("test")
-
-  collection.drop().results()
-
-  // make a document and insert it
-  val doc1: Document = Document( "name" -> "MongoDB", "type" -> "database",
-    "count" -> 1, "info" -> Document("x" -> 203, "y" -> 102))
-
-  collection.insertOne(doc1).results()
- //collection.deleteMany(Document())
-
-
-}
 object Int {
   def unapply(s: String): Option[Int] = util.Try(s.toInt).toOption
 }
