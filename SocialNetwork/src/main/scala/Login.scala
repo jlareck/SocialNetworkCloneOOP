@@ -3,14 +3,16 @@ import org.mongodb.scala.{ChangeStreamObservable, Document}
 import org.mongodb.scala.model.Aggregates
 import org.mongodb.scala.model.Filters
 
+import org.mongodb.scala.model.Updates
+
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent
+
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.mongodb.scala.ChangedStreamsTest._
-import org.mongodb.scala.bson.BsonDocument
-import org.mongodb.scala.model.Filters._
+//import org.mongodb.scala.bson.BsonDocument
+//import org.mongodb.scala.model.Filters._
 //TODO: implement concurrent execution of different users' actions
 object Login extends App{
 
@@ -25,7 +27,7 @@ object Login extends App{
 //        user1.subscribe("user3")
        // Thread.sleep(2000)
       Thread.sleep(2000)
-        for (i<-0 until 3){
+        for (i<-0 until 2){
             user1.createMessage(i.toString, Themes("111" ))
             printInfo(i.toString + " "+"user1")
             Thread.sleep(1000)
@@ -36,7 +38,7 @@ object Login extends App{
         val user2 = MongoInteractor.authorization("user2","p2")
       //  user2.subscribe("user1")
         //user2.subscribe("user3")
-        val pipeline = ArrayBuffer(Aggregates.filter(Document("{'fullDocument.userName': 'user1'}")))
+        val pipeline = ArrayBuffer(Aggregates.filter(Document("{'fullDocument.userName': 'user2'}")))
       val observable: ChangeStreamObservable[Document] = collection.watch(pipeline).fullDocument(FullDocument.UPDATE_LOOKUP)
 
       observable.subscribe(observer)
@@ -52,10 +54,6 @@ object Login extends App{
             observer.waitForThenCancel()
           }
 
-
-
-
-
          // Thread.sleep(1000)
         }
 
@@ -65,8 +63,8 @@ object Login extends App{
 //        user3.subscribe("user1")
 //        user3.subscribe("user2")
       Thread.sleep(2000)
-        for (i<-0 until 3){
-        //    user3.createMessage(i.toString, Themes("333" ))
+        for (i<-0 until 2){
+            user3.createMessage(i.toString, Themes("333" ))
             printInfo(i.toString + " "+"user3")
             Thread.sleep(2000)
         }
@@ -77,10 +75,10 @@ object Login extends App{
             Future {
                 user1Execution()
             },Future {
-                user2Execution()}
-//            },Future {
-//                user3Execution()
-//            }
+                user2Execution()
+            },Future {
+                user3Execution()
+            }
 
         )
     }
