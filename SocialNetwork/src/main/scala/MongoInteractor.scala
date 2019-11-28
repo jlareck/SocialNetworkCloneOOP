@@ -109,8 +109,8 @@ object MongoInteractor {
     val feed: ArrayBuffer[Messages] = ArrayBuffer()
     for(t <- timeline){
       val splitPath:Array[String] = t.path.split("\\.")
-      println(t.path)
-      println(splitPath.size)
+//      println(t.ownerOfMessage)
+//      println(splitPath.size)
       val message = collectionTest.find(equal("userName",t.ownerOfMessage)).projection(fields(include("text"), slice(splitPath(0),splitPath(1).toInt, 1),excludeId())).convertToJsonString().stripMargin
       var m = message.dropRight(2)
       m = m.drop(14)
@@ -120,7 +120,21 @@ object MongoInteractor {
     }
     feed
   }
+  def decodePost(referenceToPost: Path): Unit={
 
+
+      val splitPath:Array[String] = referenceToPost.path.split("\\.")
+      //println(referenceToPost.path)
+      //println(splitPath.size)
+      val message = collectionTest.find(equal("userName",referenceToPost.ownerOfMessage)).projection(fields(include("text"), slice(splitPath(0),splitPath(1).toInt, 1),excludeId())).convertToJsonString().stripMargin
+      //println(message)
+      var m = message.dropRight(2)
+      m = m.drop(14)
+
+      val decodedMessage = parser.decode[Messages](m).toOption.get
+      println(decodedMessage)
+
+  }
 
 
   def addPostInSubscribersTimeline(subscribers: ArrayBuffer[String], doc: BsonDocument):Unit={
