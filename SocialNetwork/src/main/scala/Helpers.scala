@@ -1,22 +1,19 @@
 
 
 import org.mongodb.scala._
-
-
+import MongoInteractor._
+import io.circe._
+import io.circe.generic.auto._
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit.SECONDS
 
-
-
-
 import org.mongodb.scala.model.changestream.ChangeStreamDocument
-
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 import scala.collection.mutable
-//TODO: remove duplication of ObservableExecutor
+
 object Helpers {
 
   private val mongoClient: MongoClient = MongoClient()
@@ -31,7 +28,7 @@ object Helpers {
 //    def execute(): T = Await.result(observable.toFuture(), waitDuration)
 //  }
   implicit class DocumentObservable[C](val observable: Observable[Document]) extends ImplicitObservable[Document] {
-    override val converter: (Document) => String = (doc) => doc.toJson
+    override val converter: Document => String = doc => doc.toJson
   }
 
   implicit class GenericObservable[C](val observable: Observable[C]) extends ImplicitObservable[C] {
@@ -56,6 +53,7 @@ object Helpers {
       val observer: LatchedObserver[C] = new LatchedObserver[C](false)
       observable.subscribe(observer)
       observer.await()
+
     }
   }
   class LatchedObserver[T](val printResults: Boolean = true, val minimumNumberOfResults: Int = 1) extends Observer[T] {
@@ -73,7 +71,13 @@ object Helpers {
       resultsBuffer+=t
 
       if (printResults) t match{
-        case t:ChangeStreamDocument[Document] => println(t.getUpdateDescription)
+        case t: ChangeStreamDocument[Document] => {
+          val updatedFields = t.getUpdateDescription.getUpdatedFields
+          val postPath = updatedFields.get(updatedFields.getFirstKey)
+
+          val path = parser.decode[Path](postPath.toString).toOption.get
+          decodeOnePost(path)
+        }
         case _=> println("Parse Error")
       }
       if (resultsBuffer.size >= minimumNumberOfResults) latch.countDown()
