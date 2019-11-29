@@ -1,6 +1,6 @@
 //package scala
 // TODO: Think about how to delete message
-// TODO: Implement adding liked and disliked messages to arrays
+
 
 
 import scala.collection.mutable.ArrayBuffer
