@@ -24,9 +24,7 @@ object Helpers {
   var observer = new LatchedObserver[ChangeStreamDocument[Document]]()
 
   val waitDuration = Duration(60, "seconds")
-//  implicit class SingleObservableExecutor[T](observable: SingleObservable[T]) {
-//    def execute(): T = Await.result(observable.toFuture(), waitDuration)
-//  }
+
   implicit class DocumentObservable[C](val observable: Observable[Document]) extends ImplicitObservable[Document] {
     override val converter: Document => String = doc => doc.toJson
   }
@@ -76,7 +74,7 @@ object Helpers {
           val postPath = updatedFields.get(updatedFields.getFirstKey)
 
           val path = parser.decode[Path](postPath.toString).toOption.get
-          decodeOnePost(path)
+          decodePost(path)
         }
         case _=> println("Parse Error")
       }
