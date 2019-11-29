@@ -7,10 +7,10 @@ import Helpers._
 import org.mongodb.scala._
 import org.mongodb.scala.model.Updates._
 
-import org.mongodb.scala.model.Projections._
+import org.mongodb.scala.model.Projections.{fields, slice, include, excludeId,exclude}
 
 
-import org.mongodb.scala.model.Filters._
+import org.mongodb.scala.model.Filters.{equal,elemMatch, and}
 
 import org.mongodb.scala.bson._
 import scala.collection.mutable.ArrayBuffer
@@ -142,37 +142,47 @@ object MongoInteractor {
     for (s<- subscribers) collectionTest.updateOne(equal("userName", s), push("timeline", doc)).subscribeAndAwait()
   }
 
-  def likeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={
-    val splitPath = path.split("\\.")
+
+  def reactOnMessage(userThatReact:String, pathToMessage: Path, reaction:String):Unit={
+
+    reaction match{
+        case "like" => {
+          val splitPath = pathToMessage.path.split("\\.")
+
+          if (!splitPath.contains("comments")) {
+            collectionTest.updateOne(equal("userName", userThatReact),
+              push("favouriteMessages", BsonDocument("ownerOfMessage" -> pathToMessage.ownerOfMessage, "path" -> pathToMessage.path))).results()
+
+          }
+          val pathToLike = pathToMessage.path+".likes.likes"
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToLike,1)).results()
+
+          val pathToRating = pathToMessage.path+".likes.rating"
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToRating,1)).results()
+
+          val pathToUserWhoReacted = pathToMessage.path+".userWhoReacted"
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage),push(pathToUserWhoReacted, userThatReact)).results()
+
+        }
+        case "dislike" => {
 
 
-    if (!splitPath.contains("comments")){
-      collectionTest.updateOne(equal("userName", userThatLike),
-        push("favouriteMessages",BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path))).results()
-    }
+          val pathToDislike = pathToMessage.path+".likes.dislikes"
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToDislike,1)).results()
 
-    collectionTest.updateOne(equal("userName", ownerOfMessage), inc(path,1)).results()
+          val pathToRating = pathToMessage.path+".likes.rating"
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToRating,-1)).results()
 
-   // println(splitPath(splitPath.size-1))
-    splitPath(splitPath.size-1) = "rating"
-    val ratingPath = splitPath.mkString(".")
-    collectionTest.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, 1)).results()
+          val pathToUserWhoReacted = pathToMessage.path+".userWhoReacted"
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage),push(pathToUserWhoReacted, userThatReact)).results()
 
-    splitPath.remove(splitPath.size-2, 1)
-    splitPath(splitPath.size-1) = "usersWhoLiked"
-    val usersWhoLikedPath = splitPath.mkString(".")
-    collectionTest.updateOne(equal("userName", ownerOfMessage), push(usersWhoLikedPath, userThatLike))
+        }
+      }
+
 
   }
-  def dislikeMessage(userThatLike:String, ownerOfMessage:String, path:String):Unit={//TODO: implement adding user to list who disliked message
 
-    collectionTest.updateOne(equal("userName", ownerOfMessage), inc(path,1)).results()
-    val splitPath = path.split("\\.")
-    splitPath(splitPath.size-1) = "rating"
-    val ratingPath = splitPath.mkString(".")
-    collectionTest.updateOne(equal("userName", ownerOfMessage),inc(ratingPath, -1)).results()
 
-  }
 
 
 
