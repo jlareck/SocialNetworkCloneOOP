@@ -45,7 +45,7 @@ object MongoInteractor {
         comments <- hCursor.get[Array[Messages]]("comments")
         references <- hCursor.get[Array[String]]("references")
         likes <- hCursor.get[Likes]("likes")
-        usersWhoReacted <-hCursor.get[ArrayBuffer[String]]("userWhoReacted")
+        usersWhoReacted <-hCursor.get[Array[String]]("userWhoReacted")
 
       } yield Messages(text,owner, Themes(theme), comments,references,likes, usersWhoReacted)
     }
