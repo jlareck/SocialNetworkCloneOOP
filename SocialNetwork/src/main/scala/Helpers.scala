@@ -70,17 +70,19 @@ object Helpers {
 
       if (printResults) r match{
         case r: ChangeStreamDocument[Document] => {
+          val userWhoseDocumentWasModified = r.getFullDocument.get("_id").get.asString.getValue
           val updatedFields = r.getUpdateDescription.getUpdatedFields
           val valuesOfUpdatedFields = updatedFields.get(updatedFields.getFirstKey)
           if(updatedFields.getFirstKey.contains("timeline")){
             val decodedObject = parser.decode[Path](valuesOfUpdatedFields.toString).toOption.get
-            decodePost(decodedObject)
+
+            Login.printInfo(userWhoseDocumentWasModified + "  " + decodePost(decodedObject).toString)
           }
           else if (updatedFields.getFirstKey.contains("comments")){
-            println("Someone commented your post")
+            Login.printInfo("Someone commented post of " + userWhoseDocumentWasModified)
           }
           else if (updatedFields.getFirstKey.contains("likes")){
-            println("Someone reacted on your message")
+            Login.printInfo("Someone reacted on message of" + userWhoseDocumentWasModified)
           }
 
         }
