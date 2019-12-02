@@ -30,9 +30,9 @@ object MongoInteractor {
         favouriteThemes <- hCursor.get[Array[Themes]]("favouriteThemes")
         messages <- hCursor.get[Array[Messages]]("messages")
         friends <- hCursor.get[Array[String]]("friends")
-        subscribers <- hCursor.get[ArrayBuffer[String]]("subscribers")
+        subscribers <- hCursor.get[Array[String]]("subscribers")
         favouriteMessages <- hCursor.get[Array[Path]]("favouriteMessages")
-        timeline <- hCursor.get[ArrayBuffer[Path]]("timeline")
+        timeline <- hCursor.get[Array[Path]]("timeline")
       } yield User(id,userName,password, name, favouriteThemes, friends,subscribers, messages, favouriteMessages, timeline)
     }
   implicit val messageDecoder: Decoder[Messages] =
@@ -59,11 +59,18 @@ object MongoInteractor {
 
       } yield Path(ownerOfMessage, path)
     }
+
   def authorization(userName: String, password: String):User ={ // TODO: implement smth when user is not decoded
-    val foundUser = collectionTest.find(and(equal("userName",userName),
-      equal("password", password))).convertToJsonString().stripMargin
-    val decodedUser = parser.decode[User](foundUser).toOption.get
-    decodedUser
+
+      val foundUser = collectionTest.find(and(equal("userName",userName),
+        equal("password", password))).convertToJsonString().stripMargin
+
+      val decodedUser = parser.decode[User](foundUser).toOption.get
+      decodedUser
+
+
+
+
   }
 
   def addFriendToDataBase(userName: String, friendsName:String): Unit ={
@@ -88,10 +95,10 @@ object MongoInteractor {
 
     collectionTest.updateOne(equal("userName", ownerOfMessage), push("messages", doc)).subscribeAndAwait()
     val path = "messages."+lastPositionInMessages
-    val doc2 = BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path)
-    collectionTest.updateOne(equal("userName", ownerOfMessage), push("timeline", doc2)).subscribeAndAwait()
+    val pathDocument = BsonDocument("ownerOfMessage"->ownerOfMessage, "path"-> path)
+    collectionTest.updateOne(equal("userName", ownerOfMessage), push("timeline", pathDocument)).subscribeAndAwait()
 
-    addPostInSubscribersTimeline(subscribers,doc2)
+    addPostInSubscribersTimeline(subscribers,pathDocument)
 
   }
   def writeCommentToDatabase(message: Messages, path:String, commentedUser: String): Unit ={
@@ -100,7 +107,7 @@ object MongoInteractor {
         "dislikes"->message.likes.dislikes,"rating"->message.likes.rating),
       "userWhoReacted"->BsonArray())
 
-    collectionTest.updateOne(equal("userName", commentedUser), push(path, doc)).results()
+    collectionTest.updateOne(equal("userName", commentedUser), push(path+".comments", doc)).results()
 
   }
 
@@ -109,8 +116,7 @@ object MongoInteractor {
     val feed: ArrayBuffer[Messages] = ArrayBuffer()
     for(t <- timeline){
       val splitPath:Array[String] = t.path.split("\\.")
-//      println(t.ownerOfMessage)
-//      println(splitPath.size)
+
       val message = collectionTest.find(equal("userName",t.ownerOfMessage)).projection(fields(include("text"), slice(splitPath(0),splitPath(1).toInt, 1),excludeId())).convertToJsonString().stripMargin
       var m = message.dropRight(2)
       m = m.drop(14)
@@ -120,19 +126,19 @@ object MongoInteractor {
     }
     feed
   }
-  def decodePost(referenceToPost: Path): Unit={
+  def decodePost(referenceToPost: Path): Messages={
 
 
       val splitPath:Array[String] = referenceToPost.path.split("\\.")
-      //println(referenceToPost.path)
-      //println(splitPath.size)
+
       val message = collectionTest.find(equal("userName",referenceToPost.ownerOfMessage)).projection(fields(include("text"), slice(splitPath(0),splitPath(1).toInt, 1),excludeId())).convertToJsonString().stripMargin
-      //println(message)
+
       var m = message.dropRight(2)
       m = m.drop(14)
 
       val decodedMessage = parser.decode[Messages](m).toOption.get
-      println(decodedMessage)
+
+      decodedMessage
 
   }
 
@@ -181,11 +187,6 @@ object MongoInteractor {
 
 
   }
-
-
-
-
-
 
 
   def findUser(userName: String):Boolean = {
