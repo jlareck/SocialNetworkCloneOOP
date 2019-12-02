@@ -30,13 +30,13 @@ object Helpers {
   }
 
   implicit class GenericObservable[C](val observable: Observable[C]) extends ImplicitObservable[C] {
-    override val converter: (C) => String = (doc) => doc.toString
+    override val converter: C => String = doc => doc.toString
   }
 
   trait ImplicitObservable[C] {
     val observable: Observable[C]
 
-    val converter: (C) => String
+    val converter: C => String
 
     def results(): Seq[C] = Await.result(observable.toFuture(), Duration.Inf)
 
@@ -65,16 +65,24 @@ object Helpers {
       s.request(Integer.MAX_VALUE)
     }
 
-    override def onNext(t: T): Unit = {
-      resultsBuffer+=t
+    override def onNext(r: T): Unit = { //TODO: Show user who commented/liked message
+      resultsBuffer+=r
 
-      if (printResults) t match{
-        case t: ChangeStreamDocument[Document] => {
-          val updatedFields = t.getUpdateDescription.getUpdatedFields
-          val postPath = updatedFields.get(updatedFields.getFirstKey)
+      if (printResults) r match{
+        case r: ChangeStreamDocument[Document] => {
+          val updatedFields = r.getUpdateDescription.getUpdatedFields
+          val valuesOfUpdatedFields = updatedFields.get(updatedFields.getFirstKey)
+          if(updatedFields.getFirstKey.contains("timeline")){
+            val decodedObject = parser.decode[Path](valuesOfUpdatedFields.toString).toOption.get
+            decodePost(decodedObject)
+          }
+          else if (updatedFields.getFirstKey.contains("comments")){
+            println("Someone commented your post")
+          }
+          else if (updatedFields.getFirstKey.contains("likes")){
+            println("Someone reacted on your message")
+          }
 
-          val path = parser.decode[Path](postPath.toString).toOption.get
-          decodePost(path)
         }
         case _=> println("Parse Error")
       }
