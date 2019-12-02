@@ -9,28 +9,36 @@ case class User(var id: String, userName:String, password: String, name: String,
                 friends: ArrayBuffer[String]= ArrayBuffer(), subscribers:ArrayBuffer[String] = ArrayBuffer(),
                 messages: ArrayBuffer[Messages]= ArrayBuffer(), favouriteMessages:
                 ArrayBuffer[Path]=ArrayBuffer(),
-                timeline: ArrayBuffer[Path]=ArrayBuffer()) {
+                timeline: ArrayBuffer[Path]=ArrayBuffer()){
 
   def createMessage (text: String, theme: Themes,
-                     references: ArrayBuffer[String] = ArrayBuffer()): Unit = {
+                     references: ArrayBuffer[String] = ArrayBuffer()): Unit = {//add post to timeline???
 
     val message =  Messages(text, userName, theme, ArrayBuffer(), references)
     messages += message
+
     MongoInteractor.writeMessageToDatabase(message, userName, messages.size-1, subscribers)
 
   }
 
   def printTimeline():Unit={
-    val timelineToPrint = MongoInteractor.decodeTimeline(timeline)
-    timelineToPrint.foreach(println)
+    if (timeline.nonEmpty){
+      val timelineToPrint = MongoInteractor.decodeTimeline(timeline)
+      timelineToPrint.reverse.foreach(println)
+    }
+
   }
 
-  def repost(text:String, message: Messages, references: ArrayBuffer[String]): Unit ={
-    val repostMessage = Messages(text,userName, message.theme,ArrayBuffer[Messages](), references)
-    messages+=repostMessage
+  def repost(path:Path, references: ArrayBuffer[String]): Unit ={
+    val repostedMessage = decodePost(path)
+    repostedMessage.references.appendAll(references)
+    messages+=repostedMessage
+    MongoInteractor.writeMessageToDatabase(repostedMessage, userName,messages.size-1, subscribers)
+
+
   }
   def comment(text: String, path:String, commentedUser: String, theme: Themes, references: ArrayBuffer[String]=ArrayBuffer() ): Unit ={
-    val commentMessage =  Messages(text, commentedUser, theme, ArrayBuffer(), references)
+    val commentMessage =  Messages(text, userName, theme, ArrayBuffer(), references)
 
 
       if (commentedUser == userName){
@@ -101,7 +109,7 @@ case class User(var id: String, userName:String, password: String, name: String,
 
   }
   def subscribe(friendsName: String): Unit ={
-      if (MongoInteractor.findUser(userName) && !friends.contains(friendsName)){ // TODO: implement smth when user want to subscribe on self
+      if (MongoInteractor.findUser(friendsName) && !friends.contains(friendsName) && userName!=friendsName){
 
         friends+=userName
         MongoInteractor.addFriendToDataBase(userName,friendsName)
