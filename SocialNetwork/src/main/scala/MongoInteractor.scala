@@ -105,7 +105,7 @@ object MongoInteractor {
     val doc = BsonDocument("text"->message.text, "owner"->message.owner,"theme"->message.theme.theme,
       "comments"->BsonArray(), "references"->message.references.toList,"likes"->BsonDocument("likes"->message.likes.likes,
         "dislikes"->message.likes.dislikes,"rating"->message.likes.rating),
-      "userWhoReacted"->BsonArray())
+      "userWhoReacted"->message.usersWhoReacted.toList)
 
     collectionTest.updateOne(equal("userName", commentedUser), push(path+".comments", doc)).subscribeAndAwait()
 
