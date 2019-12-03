@@ -12,8 +12,8 @@ import org.mongodb.scala.model.changestream.ChangeStreamDocument
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-import scala.collection.mutable
 
+import scala.collection.mutable.ArrayBuffer
 object Helpers {
 
   private val mongoClient: MongoClient = MongoClient()
@@ -21,9 +21,8 @@ object Helpers {
 
   val collectionTest: MongoCollection[Document] = database.getCollection("test")
 
-  var observer = new LatchedObserver[ChangeStreamDocument[Document]]()
+  val observer = new LatchedObserver[ChangeStreamDocument[Document]]()
 
-  val waitDuration = Duration(60, "seconds")
 
   implicit class DocumentObservable[C](val observable: Observable[Document]) extends ImplicitObservable[Document] {
     override val converter: Document => String = doc => doc.toJson
@@ -54,9 +53,10 @@ object Helpers {
 
     }
   }
+
   class LatchedObserver[T](val printResults: Boolean = true, val minimumNumberOfResults: Int = 1) extends Observer[T] {
     private val latch: CountDownLatch = new CountDownLatch(1)
-    private val resultsBuffer: mutable.ArrayBuffer[T] = new mutable.ArrayBuffer[T]
+    private val resultsBuffer: ArrayBuffer[T] = new ArrayBuffer[T]
     private var subscription: Option[Subscription] = None
     private var error: Option[Throwable] = None
 
@@ -76,13 +76,13 @@ object Helpers {
           if(updatedFields.getFirstKey.contains("timeline")){
             val decodedObject = parser.decode[Path](valuesOfUpdatedFields.toString).toOption.get
 
-            Login.printInfo(userWhoseDocumentWasModified + "  " + decodePost(decodedObject).toString)
+            Test.printInfo(userWhoseDocumentWasModified + "  " + decodePost(decodedObject).toString)
           }
           else if (updatedFields.getFirstKey.contains("comments")){
-            Login.printInfo("Someone commented post of " + userWhoseDocumentWasModified)
+            Test.printInfo("Someone commented post of " + userWhoseDocumentWasModified)
           }
           else if (updatedFields.getFirstKey.contains("likes")){
-            Login.printInfo("Someone reacted on message of" + userWhoseDocumentWasModified)
+            Test.printInfo("Someone reacted on message of" + userWhoseDocumentWasModified)
           }
 
         }
@@ -101,7 +101,7 @@ object Helpers {
       latch.countDown()
     }
 
-    def results(): mutable.ArrayBuffer[T] = resultsBuffer
+    def results(): ArrayBuffer[T] = resultsBuffer
 
     def await(): Unit = {
       if (!latch.await(60, SECONDS)) throw new MongoTimeoutException("observable timed out")
