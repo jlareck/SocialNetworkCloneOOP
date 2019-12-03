@@ -73,7 +73,7 @@ object MongoInteractor {
 
   }
 
-  def addFriendToDataBase(userName: String, friendsName:String): Unit ={
+  def subscribeOnUser(userName: String, friendsName:String): Unit ={
     collectionTest.updateOne(equal("userName", userName),push("friends",friendsName)).results()
     collectionTest.updateOne(equal("userName", friendsName), push("subscribers", userName)).results()
   }
@@ -89,9 +89,9 @@ object MongoInteractor {
   def writeMessageToDatabase(message: Messages, ownerOfMessage: String, lastPositionInMessages: Int,
                              subscribers:ArrayBuffer[String]): Unit ={
     val doc = BsonDocument("text"->message.text, "owner"->message.owner,"theme"->message.theme.theme,
-      "comments"->BsonArray(), "references"->BsonArray(),"likes"->BsonDocument("likes"->message.likes.likes,
+      "comments"->BsonArray(), "references"->message.references.toList,"likes"->BsonDocument("likes"->message.likes.likes,
         "dislikes"->message.likes.dislikes,"rating"->message.likes.rating),
-      "userWhoReacted"->BsonArray())
+      "userWhoReacted"-> message.usersWhoReacted.toList)
 
     collectionTest.updateOne(equal("userName", ownerOfMessage), push("messages", doc)).subscribeAndAwait()
     val path = "messages."+lastPositionInMessages
@@ -103,11 +103,11 @@ object MongoInteractor {
   }
   def writeCommentToDatabase(message: Messages, path:String, commentedUser: String): Unit ={
     val doc = BsonDocument("text"->message.text, "owner"->message.owner,"theme"->message.theme.theme,
-      "comments"->BsonArray(), "references"->BsonArray(),"likes"->BsonDocument("likes"->message.likes.likes,
+      "comments"->BsonArray(), "references"->message.references.toList,"likes"->BsonDocument("likes"->message.likes.likes,
         "dislikes"->message.likes.dislikes,"rating"->message.likes.rating),
-      "userWhoReacted"->BsonArray())
+      "userWhoReacted"->message.references.toList)
 
-    collectionTest.updateOne(equal("userName", commentedUser), push(path+".comments", doc)).results()
+    collectionTest.updateOne(equal("userName", commentedUser), push(path+".comments", doc)).subscribeAndAwait()
 
   }
 
@@ -157,30 +157,30 @@ object MongoInteractor {
 
           if (!splitPath.contains("comments")) {
             collectionTest.updateOne(equal("userName", userThatReact),
-              push("favouriteMessages", BsonDocument("ownerOfMessage" -> pathToMessage.ownerOfMessage, "path" -> pathToMessage.path))).results()
+              push("favouriteMessages", BsonDocument("ownerOfMessage" -> pathToMessage.ownerOfMessage, "path" -> pathToMessage.path))).subscribeAndAwait()
 
           }
           val pathToLike = pathToMessage.path+".likes.likes"
-          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToLike,1)).results()
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToLike,1)).subscribeAndAwait()
 
           val pathToRating = pathToMessage.path+".likes.rating"
-          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToRating,1)).results()
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToRating,1)).subscribeAndAwait()
 
           val pathToUserWhoReacted = pathToMessage.path+".userWhoReacted"
-          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage),push(pathToUserWhoReacted, userThatReact)).results()
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage),push(pathToUserWhoReacted, userThatReact)).subscribeAndAwait()
 
         }
         case "dislike" => {
 
 
           val pathToDislike = pathToMessage.path+".likes.dislikes"
-          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToDislike,1)).results()
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToDislike,1)).subscribeAndAwait()
 
           val pathToRating = pathToMessage.path+".likes.rating"
-          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToRating,-1)).results()
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage), inc(pathToRating,-1)).subscribeAndAwait()
 
           val pathToUserWhoReacted = pathToMessage.path+".userWhoReacted"
-          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage),push(pathToUserWhoReacted, userThatReact)).results()
+          collectionTest.updateOne(equal("userName", pathToMessage.ownerOfMessage),push(pathToUserWhoReacted, userThatReact)).subscribeAndAwait()
 
         }
       }
