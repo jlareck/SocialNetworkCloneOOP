@@ -1,4 +1,4 @@
-
+//TODO: make feed as private instance
 import scala.collection.mutable.ArrayBuffer
 
 import  Helpers._
@@ -10,7 +10,6 @@ case class User(var id: String, userName:String, password: String, name: String,
                 messages: ArrayBuffer[Messages]= ArrayBuffer(), favouriteMessages:
                 ArrayBuffer[Path]=ArrayBuffer(),
                 timeline: ArrayBuffer[Path]=ArrayBuffer()){
-  private val feed = decodeTimeline(timeline)
 
   def createMessage (text: String, theme: Themes,
                      references: ArrayBuffer[String] = ArrayBuffer()): Unit = {//add post to timeline???
@@ -24,14 +23,13 @@ case class User(var id: String, userName:String, password: String, name: String,
 
   def printTimeline():Unit={
     if (timeline.nonEmpty){
-      feed.reverse.foreach(println)
+      val timelineToPrint = MongoInteractor.decodeTimeline(timeline)
+      timelineToPrint.reverse.foreach(println)
     }
 
   }
-  def printFeedByThemes(theme: Themes):Unit={
-      feed.filter(x=> x.theme == theme).foreach(println)
-  }
-  def repost(path:Path, references: ArrayBuffer[String]=ArrayBuffer()): Unit ={
+
+  def repost(path:Path, references: ArrayBuffer[String]): Unit ={
     val repostedMessage = decodePost(path)
     repostedMessage.references.appendAll(references)
     messages+=repostedMessage
