@@ -1,9 +1,9 @@
 //TODO: make feed as private instance
-import scala.collection.mutable.ArrayBuffer
-
-import  Helpers._
+import Helpers._
 import MongoInteractor._
 import org.mongodb.scala.model.Filters.{and, equal}
+
+import scala.collection.mutable.ArrayBuffer
 case class User(var id: String, userName:String, password: String, name: String,
                 favouriteThemes: ArrayBuffer[Themes] = ArrayBuffer(),
                 friends: ArrayBuffer[String]= ArrayBuffer(), subscribers:ArrayBuffer[String] = ArrayBuffer(),
@@ -43,12 +43,12 @@ case class User(var id: String, userName:String, password: String, name: String,
 
       if (commentedUser == userName){
       val splitPath = path.split("\\.").toBuffer
-      splitPath -= "messages"
+      splitPath -= Fields.messages
       def getToMessage( messages:ArrayBuffer[Messages],listPath: List[String]): ArrayBuffer[Messages] ={
         listPath.head  match{
           //case "messages" => getToMessage(index, messages, listPath.tail)
           case Int(i) => if(listPath.tail.isEmpty)messages else getToMessage( messages(i).comments, listPath.tail)
-          case "comments" =>if(listPath.tail.isEmpty) messages else getToMessage(messages,listPath.tail)
+          case Fields.comments =>if(listPath.tail.isEmpty) messages else getToMessage(messages,listPath.tail)
 
         }
       }
@@ -57,17 +57,18 @@ case class User(var id: String, userName:String, password: String, name: String,
     writeCommentToDatabase(commentMessage, path,commentedUser)
   }
   def like(pathToMessage: Path): Unit ={
-    val a = collectionTest.find(and(equal("userName", pathToMessage.ownerOfMessage),
-      equal(pathToMessage.path+".userWhoReacted", userName))).results()
+    val a = collectionTest.find(and(equal(Fields.userName, pathToMessage.ownerOfMessage),
+      equal(pathToMessage.path+s".${Fields.usersWhoReacted}", userName))).results()
+
     if(a.isEmpty){
       if (pathToMessage.ownerOfMessage == userName){
         val splitPath = pathToMessage.path.split("\\.").toBuffer
-        splitPath -= "messages"
+        splitPath -= Fields.messages
         def getToMessage( messages:ArrayBuffer[Messages],listPath: List[String]): Messages ={
           listPath.head  match{
             //case "messages" => getToMessage(index, messages, listPath.tail)
             case Int(i) => if(listPath.tail.isEmpty)messages(i) else getToMessage (messages(i).comments, listPath.tail)
-            case "comments" => getToMessage(messages,listPath.tail)
+            case Fields.comments => getToMessage(messages,listPath.tail)
 
           }
         }
@@ -83,17 +84,18 @@ case class User(var id: String, userName:String, password: String, name: String,
 
   }
   def dislike(pathToMessage: Path): Unit ={
-    val a = collectionTest.find(and(equal("userName", pathToMessage.ownerOfMessage),
-      equal(pathToMessage.path+".userWhoReacted", userName))).results()
+    val a = collectionTest.find(and(equal(Fields.userName, pathToMessage.ownerOfMessage),
+      equal(pathToMessage.path+s".${Fields.usersWhoReacted}", userName))).results()
+
     if(a.isEmpty){
       if (pathToMessage.ownerOfMessage == userName){
         val splitPath = pathToMessage.path.split("\\.").toBuffer
-        splitPath -= "messages"
+        splitPath -= Fields.messages
         def getToMessage( messages:ArrayBuffer[Messages],listPath: List[String]): Messages ={
           listPath.head  match{
 
             case Int(i) => if(listPath.tail.isEmpty)messages(i) else getToMessage (messages(i).comments, listPath.tail)
-            case "comments" => getToMessage(messages,listPath.tail)
+            case Fields.comments => getToMessage(messages,listPath.tail)
 
           }
         }

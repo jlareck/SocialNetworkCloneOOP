@@ -1,25 +1,22 @@
 
 
-import org.mongodb.scala._
-import MongoInteractor._
-import io.circe._
-import io.circe.generic.auto._
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit.SECONDS
 
+import MongoInteractor._
+import io.circe._
+import org.mongodb.scala._
 import org.mongodb.scala.model.changestream.ChangeStreamDocument
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-
-
-import scala.collection.mutable.ArrayBuffer
 object Helpers {
 
   private val mongoClient: MongoClient = MongoClient()
-  private val database: MongoDatabase = mongoClient.getDatabase("mydb")
+  private val database: MongoDatabase = mongoClient.getDatabase(Fields.database)
 
-  val collectionTest: MongoCollection[Document] = database.getCollection("test")
+  val collectionTest: MongoCollection[Document] = database.getCollection(Fields.collection)
 
   val observer = new LatchedObserver[ChangeStreamDocument[Document]]()
 
@@ -70,18 +67,18 @@ object Helpers {
 
       if (printResults) r match{
         case r: ChangeStreamDocument[Document] => {
-          val userWhoseDocumentWasModified = r.getFullDocument.get("_id").get.asString.getValue
+          val userWhoseDocumentWasModified = r.getFullDocument.get(Fields.id).get.asString.getValue
           val updatedFields = r.getUpdateDescription.getUpdatedFields
           val valuesOfUpdatedFields = updatedFields.get(updatedFields.getFirstKey)
-          if(updatedFields.getFirstKey.contains("timeline")){
+          if(updatedFields.getFirstKey.contains(Fields.timeline)){
             val decodedObject = parser.decode[Path](valuesOfUpdatedFields.toString).toOption.get
 
             Test.printInfo(userWhoseDocumentWasModified + "  " + decodePost(decodedObject).toString)
           }
-          else if (updatedFields.getFirstKey.contains("comments")){
+          else if (updatedFields.getFirstKey.contains(Fields.comments)){
             Test.printInfo("Someone commented post of " + userWhoseDocumentWasModified)
           }
-          else if (updatedFields.getFirstKey.contains("likes")){
+          else if (updatedFields.getFirstKey.contains(Fields.likes)){
             Test.printInfo("Someone reacted on message of" + userWhoseDocumentWasModified)
           }
 
