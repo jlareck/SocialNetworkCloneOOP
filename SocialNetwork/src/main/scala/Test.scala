@@ -1,15 +1,13 @@
 
+import Helpers._
 import com.mongodb.client.model.changestream.FullDocument
-import org.mongodb.scala.{ChangeStreamObservable, Document}
 import org.mongodb.scala.model.Aggregates
+import org.mongodb.scala.{ChangeStreamObservable, Document}
 
 import scala.collection.mutable.ArrayBuffer
-import Helpers._
-
-
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 
 object SimpleTest extends App{
@@ -31,8 +29,9 @@ object SimpleTest extends App{
 
     observable.subscribe(observer)
     Thread.sleep(1000)
-    user2.repost(Path( "user1","messages.0"), ArrayBuffer("user1"))
-    user2.like(Path( "user1","messages.0"))
+    //if there is no messages in user1, user2 won't repost or like user2's message 0, so use those functions when there is at least one message in user1
+    //user2.repost(Path( "user1","messages.0"), ArrayBuffer("user1"))
+    //user2.like(Path( "user1","messages.0"))
     for (i<-0 until 1){
       user2.createMessage("AAAAAAAAAAAAA", Themes("111" ))
       Test.printInfo(i.toString + " "+"user2")
@@ -46,8 +45,9 @@ object SimpleTest extends App{
     val observable: ChangeStreamObservable[Document] = collectionTest.watch(pipeline).fullDocument(FullDocument.UPDATE_LOOKUP)
 
     observable.subscribe(observer)
-    Thread.sleep(1000)
-    user3.comment("WOW", "messages.0", "user2",Themes("aaaaaa"))
+  //  Thread.sleep(2000)
+    //if there is no messages in user2, user3 won't comment user2's message 0, so use it when there is at least one message in user2
+  //  user3.comment("WOW", "messages.0", "user2",Themes("aaaaaa"))
     user3.createMessage("fasdf",Themes("f111"),ArrayBuffer("user1"))
     for (i<-0 until 2){
       user3.createMessage("Hello "+i, Themes("111" ))
@@ -70,9 +70,16 @@ object SimpleTest extends App{
 
     )
   }
-  val task = Future.sequence(runTask)
-  Await.result(task, Duration.Inf)
-  // val user3 = MongoInteractor.authorization("user3","p3")
+  if(!MongoInteractor.findUser("user1")){
+     Registration.registrationTest()
+  }
+  else{
+      val task = Future.sequence(runTask)
+      Await.result(task, Duration.Inf)
+  }
+
+
+ //  val user3 = MongoInteractor.authorization("user3","p3")
   //user3.printTimeline()
 }
 
