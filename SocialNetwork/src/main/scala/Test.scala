@@ -11,6 +11,10 @@ import scala.concurrent.{Await, Future}
 
 
 object SimpleTest extends App{
+  if(!MongoInteractor.findUser("user1")){
+    Registration.registrationTest()
+  }
+
   def user1Execution():Unit={
     val user1 = MongoInteractor.authorization("user1","p1")
     user1.subscribeOnUser("user2")
@@ -65,18 +69,11 @@ object SimpleTest extends App{
         user3Execution()
       }
 
-
-
-
     )
   }
-  if(!MongoInteractor.findUser("user1")){
-     Registration.registrationTest()
-  }
-  else{
-      val task = Future.sequence(runTask)
-      Await.result(task, Duration.Inf)
-  }
+  val task = Future.sequence(runTask)
+  Await.result(task, Duration.Inf)
+
 
 
  //  val user3 = MongoInteractor.authorization("user3","p3")
